@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - JSP PLANTS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cart-item {
+            transition: all 0.3s ease;
+        }
+        
+        .cart-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .quantity-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .quantity-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .remove-btn:hover {
+            background-color: #dc2626;
+            transform: scale(1.05);
+        }
+        
+        .checkout-btn {
+            background: linear-gradient(135deg, #2dd4bf, #4ade80);
+            transition: all 0.3s ease;
+        }
+        
+        .checkout-btn:hover {
+            background: linear-gradient(135deg, #26a69a, #36b365);
+            transform: translateY(-2px);
+        }
+        
+        .empty-cart {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cart-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header Section -->
+    <header class="bg-teal-50 px-10 py-2 text-sm">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <div>
+                <span class="text-gray-700">📞 Call: +8870346521, +9971234529 | ✉️ Email: snjaya23@gmail.com</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-gray-700">Follow us:</span>
+                <a href="#" class="text-cyan-600 hover:text-cyan-800 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-cyan-700 hover:text-cyan-900 transition-colors"><i class="fab fa-linkedin"></i></a>
+                <a href="#" class="text-cyan-400 hover:text-cyan-600 transition-colors"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-rose-500 hover:text-rose-700 transition-colors"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navbar -->
+    <nav class="bg-teal-400 px-10 py-4">
+        <div class="flex items-center justify-between max-w-7xl mx-auto">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-teal-300 rounded-full flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-lg">
+                        <img src="logo.jpg" alt="JSP Plants Logo" style="border-radius: 50%;">
+                    </div>
+                    <span class="text-amber-200 text-3xl font-bold">JSP PLANTS</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-amber-200 hover:text-white transition-colors font-medium">← Back to Shop</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Cart Content -->
+    <div class="max-w-7xl mx-auto px-10 py-8">
+        <div class="flex items-center gap-3 mb-8">
+            <span class="text-4xl">🛒</span>
+            <h1 class="text-4xl font-bold text-gray-800">Shopping Cart</h1>
+            <span class="bg-teal-400 text-white px-3 py-1 rounded-full text-sm font-semibold" id="cart-count">0 items</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Cart Items -->
+            <div class="lg:col-span-2">
+                <div id="cart-items" class="space-y-4">
+                    <!-- Cart items will be loaded here -->
+                </div>
+                
+                <!-- Empty Cart Message -->
+                <div id="empty-cart" class="empty-cart text-center py-16 hidden">
+                    <div class="text-8xl mb-6">🛒</div>
+                    <h2 class="text-2xl font-semibold text-gray-600 mb-4">Your cart is empty</h2>
+                    <p class="text-gray-500 mb-8">Add some beautiful plants to get started!</p>
+                    <a href="index.html" class="bg-teal-400 text-white px-8 py-3 rounded-full hover:bg-teal-500 transition-colors font-semibold">
+                        Continue Shopping
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-md p-6 sticky top-8" id="cart-summary">
+                    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Order Summary</h2>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-semibold" id="subtotal">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Shipping:</span>
+                            <span class="font-semibold text-green-500" id="shipping">Free</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tax:</span>
+                            <span class="font-semibold" id="tax">$0.00</span>
+                        </div>
+                        <hr class="border-gray-200">
+                        <div class="flex justify-between text-xl font-bold">
+                            <span>Total:</span>
+                            <span class="text-teal-500" id="total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button class="checkout-btn w-full text-white py-3 rounded-lg font-semibold text-lg" id="checkout-btn">
+                            Proceed to Checkout
+                        </button>
+                        <a href="index.html" class="block w-full text-center border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+                            Continue Shopping
+                        </a>
+                    </div>
+
+                    <!-- Promo Code -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="font-semibold mb-3">Promo Code</h3>
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="Enter code" class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400" id="promo-input">
+                            <button class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors" id="apply-promo">
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-700 text-white py-12 mt-16">
+        <div class="max-w-7xl mx-auto px-10">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-teal-400 rounded-full flex items-center justify-center text-xl">🌱</div>
+                        <span class="text-xl font-bold">JSP PLANTS</span>
+                    </div>
+                    <p class="text-gray-300">Your trusted partner for all gardening needs. Quality plants, expert advice, and exceptional service.</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="index.html" class="hover:text-white transition-colors">Home</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Categories</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Products</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Services</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Customer Care</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white transition-colors">Plant Care Guide</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Shipping Info</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Returns</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
+                    <div class="flex gap-4">
+                        <a href="#" class="text-2xl hover:text-cyan-400 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-2xl hover:text-cyan-300 transition-colors"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-2xl hover:text-rose-400 transition-colors"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-2xl hover:text-cyan-600 transition-colors"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-600 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 JSP PLANTS. All rights reserved. | Designed with for plant lovers</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Cart functionality
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        // Update cart display
+        function updateCartDisplay() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const emptyCartMessage = document.getElementById('empty-cart');
+            const cartCount = document.getElementById('cart-count');
+            
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '';
+                emptyCartMessage.classList.remove('hidden');
+                cartCount.textContent = '0 items';
+                updateCartSummary();
+                return;
+            }
+            
+            emptyCartMessage.classList.add('hidden');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
+            
+            cartItemsContainer.innerHTML = cart.map(item => `
+                <div class="cart-item bg-white rounded-xl shadow-md p-6">
+                    <div class="flex items-center gap-6">
+                        <!-- Product Image -->
+                        <img src="${item.image}" alt="${item.name}" class="cart-image" onerror="this.src='https://via.placeholder.com/80?text=Plant'">
+                        
+                        <!-- Product Details -->
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-1">${item.name}</h3>
+                            <p class="text-gray-600 text-sm mb-2">Premium quality plant</p>
+                            <div class="text-xl font-bold text-teal-500">${item.price}</div>
+                        </div>
+                        
+                        <!-- Quantity Controls -->
+                        <div class="flex items-center gap-3">
+                            <button class="quantity-btn w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors" onclick="updateQuantity('${item.id}', -1)">
+                                <i class="fas fa-minus text-sm"></i>
+                            </button>
+                            <span class="w-8 text-center font-semibold">${item.quantity}</span>
+                            <button class="quantity-btn w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors" onclick="updateQuantity('${item.id}', 1)">
+                                <i class="fas fa-plus text-sm"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Remove Button -->
+                        <button class="remove-btn w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center transition-all" onclick="removeItem('${item.id}')">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            updateCartSummary();
+        }
+        
+        // Update quantity
+        function updateQuantity(itemId, change) {
+            const item = cart.find(item => item.id == itemId);
+            if (item) {
+                item.quantity += change;
+                if (item.quantity <= 0) {
+                    removeItem(itemId);
+                    return;
+                }
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartDisplay();
+            }
+        }
+        
+        // Remove item
+        function removeItem(itemId) {
+            cart = cart.filter(item => item.id != itemId);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartDisplay();
+        }
+        
+        // Update cart summary
+        function updateCartSummary() {
+            const subtotalElement = document.getElementById('subtotal');
+            const taxElement = document.getElementById('tax');
+            const totalElement = document.getElementById('total');
+            
+            let subtotal = 0;
+            cart.forEach(item => {
+                const price = parseFloat(item.price.replace('$', ''));
+                subtotal += price * item.quantity;
+            });
+            
+            const tax = subtotal * 0.08; // 8% tax
+            const total = subtotal + tax;
+            
+            subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+            taxElement.textContent = `$${tax.toFixed(2)}`;
+            totalElement.textContent = `$${total.toFixed(2)}`;
+        }
+        
+        // Checkout functionality
+        document.getElementById('checkout-btn').addEventListener('click', function() {
+            if (cart.length === 0) {
+                alert('Your cart is empty! Add some plants first.');
+                return;
+            }
+            
+            const total = document.getElementById('total').textContent;
+            alert(`Thank you for your order! Total: ${total}\n\nThis is a demo - your plants will be delivered soon! 🌱`);
+            
+            // Clear cart after checkout
+            cart = [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartDisplay();
+        });
+        
+        // Promo code functionality
+        document.getElementById('apply-promo').addEventListener('click', function() {
+            const promoInput = document.getElementById('promo-input');
+            const promoCode = promoInput.value.trim().toLowerCase();
+            
+            if (promoCode === 'plant10') {
+                alert('🎉 Promo code applied! 10% discount added.');
+                promoInput.value = '';
+            } else if (promoCode === 'green20') {
+                alert('🎉 Promo code applied! 20% discount added.');
+                promoInput.value = '';
+            } else if (promoCode) {
+                alert('❌ Invalid promo code. Try "PLANT10" or "GREEN20"');
+            } else {
+                alert('Please enter a promo code.');
+            }
+        });
+        
+        // Initialize cart display
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartDisplay();
+        });
+    </script>
+</body>
+</html>

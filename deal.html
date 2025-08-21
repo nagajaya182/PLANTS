@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7-Day Live Deals - JSP PLANTS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cart-count-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f43f5e;
+            color: #fff;
+            border-radius: 50%;
+            font-size: 12px;
+            padding: 2px 6px;
+            min-width: 20px;
+            text-align: center;
+            z-index: 2;
+            display: none;
+        }
+        
+        .cart-count-badge.show {
+            display: block;
+        }
+
+        .deal-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .deal-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .deal-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            animation: pulse 2s infinite;
+            background: #14b8a6;
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .countdown-timer {
+            background: #14b8a6;
+            color: white;
+            border-radius: 8px;
+            padding: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .timer-unit {
+            display: inline-block;
+            margin: 0 2px;
+            padding: 4px 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            min-width: 30px;
+            font-size: 14px;
+        }
+        
+        .main-timer-unit {
+            display: inline-block;
+            margin: 0 4px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 8px;
+            min-width: 60px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #14b8a6, #2dd4bf);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        .deal-hero {
+            background: linear-gradient(135deg, #2dd4bf, #06b6d4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .deal-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .floating-icon {
+            position: absolute;
+            animation: float 6s ease-in-out infinite;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        .add-to-cart-btn {
+            transition: all 0.3s ease;
+            background: #14b8a6;
+        }
+        
+        .add-to-cart-btn:hover {
+            background: #0d9488 !important;
+        }
+        
+        .add-to-cart-btn.added {
+            background: #14b8a6 !important;
+            transform: scale(0.95);
+        }
+        
+        .flash-sale {
+            animation: flash 1.5s infinite;
+            background: #f97316;
+        }
+        
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .expired {
+            opacity: 0.6;
+            filter: grayscale(50%);
+        }
+
+        .expired .add-to-cart-btn {
+            background: #6b7280 !important;
+            cursor: not-allowed;
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #14b8a6;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+            margin-right: 5px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .deal-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #14b8a6;
+            color: white;
+        }
+
+        .status-ending {
+            background: #f97316;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .status-expired {
+            background: #f43f5e;
+            color: white;
+        }
+
+        .deal-image {
+            width: 100%;
+            height: 192px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header Section -->
+    <header class="bg-teal-50 px-10 py-2 text-sm">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <div>
+                <span class="text-gray-700">📞 Call: +8870346521, +9971234529 | ✉️ Email: snjaya23@gmail.com</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="live-indicator"></span>
+                <span class="text-gray-700 font-semibold">LIVE DEALS ACTIVE</span>
+                <div class="flex items-center gap-2 ml-4">
+                    <span class="text-gray-700">Follow us:</span>
+                    <a href="#" class="text-cyan-600 hover:text-cyan-800 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-cyan-700 hover:text-cyan-900 transition-colors"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-cyan-400 hover:text-cyan-600 transition-colors"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-rose-500 hover:text-rose-700 transition-colors"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navbar -->
+    <nav class="bg-teal-400 px-10 py-4">
+        <div class="flex items-center justify-between max-w-7xl mx-auto">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-teal-300 rounded-full flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-lg">
+                        <img src="logo.jpg" alt="JSP Plants Logo" style="border-radius: 50%;">
+                    </div>
+                    <span class="text-amber-200 text-3xl font-bold">JSP PLANTS</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-amber-200">
+                    <span class="live-indicator"></span>
+                    <span class="font-semibold">LIVE 7-DAY DEALS</span>
+                </div>
+                <a href="carts.html" class="nav-link flex items-center gap-2 text-amber-200 hover:text-white transition-colors relative">
+                    <span class="text-xl">🛒</span>
+                    <span>Cart</span>
+                    <span class="cart-count-badge" id="cart-count-badge">0</span>
+                </a>
+                <a href="index.html" class="text-amber-200 hover:text-white transition-colors font-medium">← Back to Shop</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="deal-hero py-20 text-white relative">
+        <div class="floating-icon text-4xl" style="top: 20%; left: 10%;">🌱</div>
+        <div class="floating-icon text-3xl" style="top: 60%; right: 15%; animation-delay: -2s;">🌿</div>
+        <div class="floating-icon text-5xl" style="top: 30%; right: 25%; animation-delay: -4s;">🌸</div>
+        <div class="floating-icon text-3xl" style="top: 70%; left: 20%; animation-delay: -3s;">🌳</div>
+        <div class="floating-icon text-4xl" style="top: 15%; right: 40%; animation-delay: -1s;">🍃</div>
+        
+        <div class="max-w-7xl mx-auto px-10 text-center relative z-10">
+            <div class="flash-sale inline-block bg-teal-500 text-white px-6 py-2 rounded-full text-lg font-bold mb-6">
+                🌿 LIVE 7-DAY COUNTDOWN - REAL TIME!
+            </div>
+            <h1 class="text-6xl font-bold mb-6">7-Day Plant Mega Sale</h1>
+            <p class="text-2xl mb-8 opacity-90">Real countdown timers - Once they hit zero, deals are GONE forever!</p>
+            
+            <!-- Main Live Countdown Timer -->
+            <div class="bg-white bg-opacity-20 rounded-2xl p-8 max-w-3xl mx-auto backdrop-blur-sm">
+                <h3 class="text-2xl font-semibold mb-4">⏰ LIVE COUNTDOWN - Sale Ends In:</h3>
+                <div class="flex justify-center gap-4 text-3xl font-bold font-mono" id="main-countdown">
+                    <div class="text-center">
+                        <div class="bg-white bg-opacity-30 rounded-lg p-4 min-w-24">
+                            <span id="main-days">07</span>
+                        </div>
+                        <div class="text-sm mt-2">Days</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-white bg-opacity-30 rounded-lg p-4 min-w-24">
+                            <span id="main-hours">00</span>
+                        </div>
+                        <div class="text-sm mt-2">Hours</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-white bg-opacity-30 rounded-lg p-4 min-w-24">
+                            <span id="main-minutes">00</span>
+                        </div>
+                        <div class="text-sm mt-2">Minutes</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-white bg-opacity-30 rounded-lg p-4 min-w-24">
+                            <span id="main-seconds">00</span>
+                        </div>
+                        <div class="text-sm mt-2">Seconds</div>
+                    </div>
+                </div>
+                <p class="mt-4 text-lg opacity-90">
+                    <span class="live-indicator"></span>
+                    Started: <span id="sale-start-time"></span> | Ends: <span id="sale-end-time"></span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Deal Status Banner -->
+    <section class="py-4 bg-gradient-to-r from-teal-400 to-cyan-400 text-white">
+        <div class="max-w-7xl mx-auto px-10">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <span class="live-indicator"></span>
+                    <span class="font-semibold">LIVE DEAL STATUS:</span>
+                    <span id="deals-active-count">8 DEALS ACTIVE</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span>⚡ Real-time updates</span>
+                    <span>🌿 Limited stock</span>
+                    <span>⏰ Live countdown</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Live Deals -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-10">
+            <h2 class="text-4xl font-bold text-center mb-4 text-gray-800">🌿 LIVE 7-DAY DEALS</h2>
+            <p class="text-center text-lg text-gray-600 mb-12">Real countdown timers - When time runs out, deals expire forever!</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <!-- Deal 1 - 6 Hour Flash Sale -->
+                <div class="deal-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-name="Snake Plant" data-product-price="$12.99" data-product-image="house.webp" data-deal-hours="6">
+                    <div class="deal-badge bg-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        75% OFF
+                    </div>
+                    <div class="deal-status status-active">
+                        <span class="live-indicator"></span>LIVE
+                    </div>
+                    <img src="house.webp" alt="Snake Plant" class="deal-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">Snake Plant</h3>
+                        <p class="text-gray-600 text-sm mb-3">6-hour flash sale - Limited quantity!</p>
+                        
+                        <div class="countdown-timer text-sm">
+                            ⏰ <span class="timer-display" data-timer="deal-0">06:00:00</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-2xl font-bold text-teal-500">$12.99</span>
+                                <span class="text-sm text-gray-500 line-through ml-2">$52.99</span>
+                            </div>
+                            <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $40</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="deal-0"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">🌿 <span class="stock-info" data-stock="deal-0">78% claimed - 11 left!</span></p>
+                        
+                        <div class="flex gap-2">
+                            <button class="add-to-cart-btn flex-1 text-white py-2 rounded-lg font-semibold">
+                                Flash Deal
+                            </button>
+                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">❤️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deal 2 - 12 Hour Deal -->
+                <div class="deal-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-name="Rose Bush" data-product-price="$24.99" data-product-image="product2.jpg" data-deal-hours="12">
+                    <div class="deal-badge bg-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        60% OFF
+                    </div>
+                    <div class="deal-status status-active">
+                        <span class="live-indicator"></span>LIVE
+                    </div>
+                    <img src="product2.jpg" alt="Rose Bush" class="deal-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">Rose Bush</h3>
+                        <p class="text-gray-600 text-sm mb-3">12-hour special - Beautiful blooms</p>
+                        
+                        <div class="countdown-timer text-sm">
+                            ⏰ <span class="timer-display" data-timer="deal-1">12:00:00</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-2xl font-bold text-teal-500">$24.99</span>
+                                <span class="text-sm text-gray-500 line-through ml-2">$62.99</span>
+                            </div>
+                            <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $38</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="deal-1"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">🌹 <span class="stock-info" data-stock="deal-1">45% claimed - 27 left!</span></p>
+                        
+                        <div class="flex gap-2">
+                            <button class="add-to-cart-btn flex-1 text-white py-2 rounded-lg font-semibold">
+                                12H Deal
+                            </button>
+                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">❤️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deal 3 - 1 Day Deal -->
+                <div class="deal-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-name="Monstera Deliciosa" data-product-price="$34.99" data-product-image="product1.jpg" data-deal-hours="24">
+                    <div class="deal-badge bg-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        65% OFF
+                    </div>
+                    <div class="deal-status status-active">
+                        <span class="live-indicator"></span>LIVE
+                    </div>
+                    <img src="product1.jpg" alt="Monstera Deliciosa" class="deal-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">Monstera Deliciosa</h3>
+                        <p class="text-gray-600 text-sm mb-3">24-hour deal - Instagram famous!</p>
+                        
+                        <div class="countdown-timer text-sm">
+                            ⏰ <span class="timer-display" data-timer="deal-2">1d 00:00:00</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-2xl font-bold text-teal-500">$34.99</span>
+                                <span class="text-sm text-gray-500 line-through ml-2">$99.99</span>
+                            </div>
+                            <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $65</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="deal-2"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">🌿 <span class="stock-info" data-stock="deal-2">62% claimed - 19 left!</span></p>
+                        
+                        <div class="flex gap-2">
+                            <button class="add-to-cart-btn flex-1 text-white py-2 rounded-lg font-semibold">
+                                24H Deal
+                            </button>
+                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">❤️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deal 4 - 2 Day Deal -->
+                <div class="deal-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-name="Peace Lily" data-product-price="$18.99" data-product-image="product3.jpg" data-deal-hours="48">
+                    <div class="deal-badge bg-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        70% OFF
+                    </div>
+                    <div class="deal-status status-active">
+                        <span class="live-indicator"></span>LIVE
+                    </div>
+                    <img src="product3.jpg" alt="Peace Lily" class="deal-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">Peace Lily</h3>
+                        <p class="text-gray-600 text-sm mb-3">2-day special - Air purifying beauty</p>
+                        
+                        <div class="countdown-timer text-sm">
+                            ⏰ <span class="timer-display" data-timer="deal-3">2d 00:00:00</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-2xl font-bold text-teal-500">$18.99</span>
+                                <span class="text-sm text-gray-500 line-through ml-2">$62.99</span>
+                            </div>
+                            <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $44</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="deal-3"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">🕊️ <span class="stock-info" data-stock="deal-3">35% claimed - 32 left!</span></p>
+                        
+                        <div class="flex gap-2">
+                            <button class="add-to-cart-btn flex-1 text-white py-2 rounded-lg font-semibold">
+                                2-Day Deal
+                            </button>
+                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">❤️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deal 5 - 3 Day Deal -->
+                <div class="deal-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-name="Fiddle Leaf Fig" data-product-price="$42.99" data-product-image="product4.jpg" data-deal-hours="72">
+                    <div class="deal-badge bg-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        68% OFF
+                    </div>
+                    <div class="deal-status status-active">
+                        <span class="live-indicator"></span>LIVE
+                    </div>
+                    <img src="product4.jpg" alt="Fiddle Leaf Fig" class="deal-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">Fiddle Leaf Fig</h3>
+                        <p class="text-gray-600 text-sm mb-3">3-day deal - Statement plant</p>
+                        
+                        <div class="countdown-timer text-sm">
+                            ⏰ <span class="timer-display" data-timer="deal-4">3d 00:00:00</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-2xl font-bold text-teal-500">$42.99</span>
+                                <span class="text-sm text-gray-500 line-through ml-2">$134.99</span>
+                            </div>
+                            <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $92</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="deal-4"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">🌳 <span class="stock-info" data-stock="deal-4">28% claimed - 36 left!</span></p>
+                        
+                        <div class="flex gap-2">
+                            <button class="add-to-cart-btn flex-1 text-white py-2 rounded-lg font-semibold">
+                                3-Day Deal
+                            </button>
+                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">❤️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deal 6 - 4 Day Deal -->
+                <div class="deal-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-name="Rubber Plant" data-product-price="$29.99" data-product-image="product5.jpg" data-deal-hours="96">
+                    <div class="deal-badge bg-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        72% OFF
+                    </div>
+                    <div class="deal-status status-active">
+                        <span class="live-indicator"></span>LIVE
+                    </div>
+                    <img src="product5.jpg" alt="Rubber Plant" class="deal-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">Rubber Plant</h3>
+                        <p class="text-gray-600 text-sm mb-3">4-day special - Rare variety</p>
+                        
+                        <div class="countdown-timer text-sm">
+                            ⏰ <span class="timer-display" data-timer="deal-5">4d 00:00:00</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-2xl font-bold text-teal-500">$29.99</span>
+                                <span class="text-sm text-gray-500 line-through ml-2">$107.99</span>
+                            </div>
+                            <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $78</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="deal-5"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">🌲 <span class="stock-info" data-stock="deal-5">52% claimed - 24 left!</span></p>
+                        
+                        <div class="flex gap-2">
+                            <button class="add-to-cart-btn flex-1 text-white py-2 rounded-lg font-semibold">
+                                4-Day Deal
+                            </button>
+                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">❤️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deal 7 - 5 Day Deal -->
+                <div class="deal-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-name="Pothos" data-product-price="$15.99" data-product-image="product6.jpg" data-deal-hours="120">
+                    <div class="deal-badge bg-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        69% OFF
+                    </div>
+                    <div class="deal-status status-active">
+                        <span class="live-indicator"></span>LIVE
+                    </div>
+                    <img src="product6.jpg" alt="Pothos" class="deal-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">Pothos</h3>
+                        <p class="text-gray-600 text-sm mb-3">5-day deal - Trailing beauty</p>
+                        
+                        <div class="countdown-timer text-sm">
+                            ⏰ <span class="timer-display" data-timer="deal-6">5d 00:00:00</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-2xl font-bold text-teal-500">$15.99</span>
+                                <span class="text-sm text-gray-500 line-through ml-2">$51.99</span>
+                            </div>
+                            <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $36</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="deal-6"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">🌿 <span class="stock-info" data-stock="deal-6">18% claimed - 41 left!</span></p>
+                        
+                        <div class="flex gap-2">
+                            <button class="add-to-cart-btn flex-1 text-white py-2 rounded-lg font-semibold">
+                                5-Day Deal
+                            </button>
+                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">❤️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deal 8 - Full 7 Day Deal -->
+                <div class="deal-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-name="Aloe Vera" data-product-price="$21.99" data-product-image="product7.jpg" data-deal-hours="168">
+                    <div class="deal-badge bg-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        74% OFF
+                    </div>
+                    <div class="deal-status status-active">
+                        <span class="live-indicator"></span>LIVE
+                    </div>
+                    <img src="product7.jpg" alt="Aloe Vera" class="deal-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">Aloe Vera</h3>
+                        <p class="text-gray-600 text-sm mb-3">Full 7-day deal - Healing power</p>
+                        
+                        <div class="countdown-timer text-sm">
+                            ⏰ <span class="timer-display" data-timer="deal-7">7d 00:00:00</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-2xl font-bold text-teal-500">$21.99</span>
+                                <span class="text-sm text-gray-500 line-through ml-2">$84.99</span>
+                            </div>
+                            <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $63</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="deal-7"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">🌵 <span class="stock-info" data-stock="deal-7">8% claimed - 46 left!</span></p>
+                        
+                        <div class="flex gap-2">
+                            <button class="add-to-cart-btn flex-1 text-white py-2 rounded-lg font-semibold">
+                                7-Day Deal
+                            </button>
+                            <button class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">❤️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Stats Section -->
+        <section class="py-8 bg-gradient-to-r from-teal-400 to-cyan-400 text-white">
+            <div class="max-w-7xl mx-auto px-10">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+                    <div>
+                        <div class="text-3xl font-bold mb-2" id="total-savings">$0</div>
+                        <div class="text-sm opacity-90">Total Savings Available</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold mb-2" id="active-deals">8</div>
+                        <div class="text-sm opacity-90">Active Live Deals</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold mb-2" id="items-sold">247</div>
+                        <div class="text-sm opacity-90">Items Sold Today</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold mb-2" id="time-left">7d 00h</div>
+                        <div class="text-sm opacity-90">Sale Time Remaining</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-teal-700 text-white py-12">
+            <div class="max-w-7xl mx-auto px-10">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-teal-300 rounded-full flex items-center justify-center text-xl">🌱</div>
+                            <span class="text-xl font-bold">JSP PLANTS</span>
+                        </div>
+                        <p class="text-amber-200">Your trusted partner for all gardening needs. Quality plants, expert advice, and exceptional service.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                        <ul class="space-y-2 text-amber-200">
+                            <li><a href="index.html" class="hover:text-white transition-colors">Home</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">Categories</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">Products</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">Services</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold mb-4">Deal Info</h4>
+                        <ul class="space-y-2 text-amber-200">
+                            <li>⏰ Live countdown timers</li>
+                            <li>⚡ Real-time stock updates</li>
+                            <li>💰 Genuine savings up to 75%</li>
+                            <li>🚚 Free shipping on deals</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
+                        <div class="flex gap-4">
+                            <a href="#" class="text-2xl hover:text-cyan-400 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="text-2xl hover:text-cyan-300 transition-colors"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-2xl hover:text-rose-400 transition-colors"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="text-2xl hover:text-cyan-600 transition-colors"><i class="fab fa-linkedin"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t border-teal-600 mt-8 pt-8 text-center text-amber-200">
+                    <p>&copy; 2025 JSP PLANTS. All rights reserved. | Live deals powered by real-time technology</p>
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            // Cart functionality
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            // Deal configuration - each deal has different duration and image
+            const dealConfigs = [
+                { hours: 6, initialStock: 50, soldPercentage: 78, image: 'house.webp' },    // Snake Plant
+                { hours: 12, initialStock: 50, soldPercentage: 45, image: 'product2.jpg' },   // Rose Bush
+                { hours: 24, initialStock: 50, soldPercentage: 62, image: 'product1.jpg' },   // Monstera Deliciosa
+                { hours: 48, initialStock: 50, soldPercentage: 35, image: 'product3.jpg' },   // Peace Lily
+                { hours: 72, initialStock: 50, soldPercentage: 28, image: 'product4.jpg' },   // Fiddle Leaf Fig
+                { hours: 96, initialStock: 50, soldPercentage: 52, image: 'product5.jpg' },   // Rubber Plant
+                { hours: 120, initialStock: 50, soldPercentage: 18, image: 'product6.jpg' },  // Pothos
+                { hours: 168, initialStock: 50, soldPercentage: 8, image: 'product7.jpg' }    // Aloe Vera
+            ];
+            
+            // Initialize sale start time (when page loads for first time)
+            let saleStartTime = localStorage.getItem('saleStartTime');
+            if (!saleStartTime) {
+                saleStartTime = new Date().getTime();
+                localStorage.setItem('saleStartTime', saleStartTime);
+            } else {
+                saleStartTime = parseInt(saleStartTime);
+            }
+            
+            // Calculate main sale end time (7 days from start)
+            const mainSaleEndTime = saleStartTime + (7 * 24 * 60 * 60 * 1000);
+            
+            // Update cart count display
+            function updateCartCount() {
+                const cartBadge = document.getElementById('cart-count-badge');
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                
+                cartBadge.textContent = totalItems;
+                
+                if (totalItems > 0) {
+                    cartBadge.classList.add('show');
+                } else {
+                    cartBadge.classList.remove('show');
+                }
+            }
+            
+            // Add to cart functionality
+            function addToCart(productCard, button) {
+                // Check if deal is expired
+                if (productCard.classList.contains('expired')) {
+                    alert('Sorry! This deal has expired.');
+                    return;
+                }
+                
+                const productName = productCard.dataset.productName;
+                const productPrice = productCard.dataset.productPrice;
+                const productImage = productCard.dataset.productImage;
+                
+                const product = {
+                    id: Date.now() + Math.random(),
+                    name: productName,
+                    price: productPrice,
+                    image: productImage,
+                    quantity: 1
+                };
+                
+                const existingItemIndex = cart.findIndex(item => item.name === product.name);
+                if (existingItemIndex > -1) {
+                    cart[existingItemIndex].quantity += 1;
+                } else {
+                    cart.push(product);
+                }
+                
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartCount();
+                
+                // Visual feedback
+                const originalText = button.textContent;
+                button.textContent = 'Added! 🎉';
+                button.classList.add('added');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('added');
+                }, 2000);
+            }
+            
+            // Format time display
+            function formatTime(totalSeconds) {
+                const days = Math.floor(totalSeconds / (24 * 60 * 60));
+                const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+                const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+                const seconds = totalSeconds % 60;
+                
+                if (days > 0) {
+                    return `${days}d ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }
+            
+            // Update all countdown timers
+            function updateCountdowns() {
+                const now = new Date().getTime();
+                
+                // Update main countdown (7 days total)
+                const mainTimeLeft = Math.max(0, Math.floor((mainSaleEndTime - now) / 1000));
+                const mainDays = Math.floor(mainTimeLeft / (24 * 60 * 60));
+                const mainHours = Math.floor((mainTimeLeft % (24 * 60 * 60)) / (60 * 60));
+                const mainMinutes = Math.floor((mainTimeLeft % (60 * 60)) / 60);
+                const mainSeconds = mainTimeLeft % 60;
+                
+                document.getElementById('main-days').textContent = mainDays.toString().padStart(2, '0');
+                document.getElementById('main-hours').textContent = mainHours.toString().padStart(2, '0');
+                document.getElementById('main-minutes').textContent = mainMinutes.toString().padStart(2, '0');
+                document.getElementById('main-seconds').textContent = mainSeconds.toString().padStart(2, '0');
+                
+                // Update individual deal timers
+                let activeDeals = 0;
+                let totalSavings = 0;
+                
+                dealConfigs.forEach((config, index) => {
+                    const dealEndTime = saleStartTime + (config.hours * 60 * 60 * 1000);
+                    const dealTimeLeft = Math.max(0, Math.floor((dealEndTime - now) / 1000));
+                    const timerElement = document.querySelector(`[data-timer="deal-${index}"]`);
+                    const progressElement = document.querySelector(`[data-progress="deal-${index}"]`);
+                    const stockElement = document.querySelector(`[data-stock="deal-${index}"]`);
+                    const dealCard = document.querySelector(`[data-deal-hours="${config.hours}"]`);
+                    const statusElement = dealCard.querySelector('.deal-status');
+                    
+                    if (dealTimeLeft > 0) {
+                        // Deal is active
+                        activeDeals++;
+                        timerElement.textContent = formatTime(dealTimeLeft);
+                        
+                        // Update status based on time left
+                        if (dealTimeLeft < 3600) { // Less than 1 hour
+                            statusElement.className = 'deal-status status-ending';
+                            statusElement.innerHTML = '<span class="live-indicator"></span>ENDING SOON!';
+                        } else {
+                            statusElement.className = 'deal-status status-active';
+                            statusElement.innerHTML = '<span class="live-indicator"></span>LIVE';
+                        }
+                        
+                        // Simulate stock depletion over time
+                        const elapsedTime = now - saleStartTime;
+                        const dealDuration = config.hours * 60 * 60 * 1000;
+                        const timeProgress = Math.min(elapsedTime / dealDuration, 1);
+                        const currentSoldPercentage = Math.min(config.soldPercentage + (timeProgress * 20), 95);
+                        const remainingStock = Math.max(1, Math.floor(config.initialStock * (1 - currentSoldPercentage / 100)));
+                        
+                        progressElement.style.width = `${currentSoldPercentage}%`;
+                        stockElement.textContent = `${Math.floor(currentSoldPercentage)}% claimed - ${remainingStock} left!`;
+                        
+                        // Calculate savings for this deal
+                        const priceText = dealCard.dataset.productPrice;
+                        const currentPrice = parseFloat(priceText.replace('$', ''));
+                        const originalPriceElement = dealCard.querySelector('.line-through');
+                        if (originalPriceElement) {
+                            const originalPrice = parseFloat(originalPriceElement.textContent.replace('$', ''));
+                            totalSavings += (originalPrice - currentPrice);
+                        }
+                        
+                    } else {
+                        // Deal has expired
+                        timerElement.textContent = 'EXPIRED';
+                        dealCard.classList.add('expired');
+                        statusElement.className = 'deal-status status-expired';
+                        statusElement.innerHTML = 'EXPIRED';
+                        progressElement.style.width = '100%';
+                        stockElement.textContent = '100% claimed - SOLD OUT!';
+                    }
+                });
+                
+                // Update live stats
+                document.getElementById('active-deals').textContent = activeDeals;
+                document.getElementById('total-savings').textContent = `$${Math.floor(totalSavings * 50)}`;
+                document.getElementById('time-left').textContent = `${mainDays}d ${mainHours}h`;
+                document.getElementById('deals-active-count').textContent = `${activeDeals} DEALS ACTIVE`;
+                
+                // Update items sold counter (simulate real activity)
+                const baseItemsSold = 247;
+                const additionalSold = Math.floor((now - saleStartTime) / (60 * 1000)); // 1 item per minute
+                document.getElementById('items-sold').textContent = baseItemsSold + additionalSold;
+                
+                // If main sale is over
+                if (mainTimeLeft <= 0) {
+                    document.getElementById('deals-active-count').textContent = 'SALE ENDED';
+                }
+            }
+            
+            // Display sale start and end times
+            function displaySaleTimes() {
+                const startDate = new Date(saleStartTime);
+                const endDate = new Date(mainSaleEndTime);
+                
+                document.getElementById('sale-start-time').textContent = startDate.toLocaleString();
+                document.getElementById('sale-end-time').textContent = endDate.toLocaleString();
+            }
+            
+            // Initialize everything
+            document.addEventListener('DOMContentLoaded', function() {
+                // Add event listeners to all "Add to Cart" buttons
+                const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+                addToCartButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productCard = this.closest('.deal-card');
+                        addToCart(productCard, this);
+                    });
+                });
+                
+                updateCartCount();
+                displaySaleTimes();
+                updateCountdowns();
+                
+                // Update countdowns every second
+                setInterval(updateCountdowns, 1000);
+            });
+            
+            // Initialize immediately
+            updateCartCount();
+        </script>
+    </body>
+</html>

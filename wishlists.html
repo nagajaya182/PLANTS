@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist - JSP PLANTS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .wishlist-count-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #14b8a6;
+            color: #fff;
+            border-radius: 50%;
+            font-size: 12px;
+            padding: 2px 6px;
+            min-width: 20px;
+            text-align: center;
+            z-index: 2;
+            display: none;
+        }
+        
+        .wishlist-count-badge.show {
+            display: block;
+        }
+
+        .wishlist-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wishlist-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        
+        .wishlist-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+        }
+        
+        .heart-btn {
+            transition: all 0.3s ease;
+            color: #6b7280;
+        }
+        
+        .heart-btn.active {
+            color: #ef4444;
+            transform: scale(1.1);
+        }
+        
+        .heart-btn:hover {
+            color: #ef4444;
+            transform: scale(1.05);
+        }
+        
+        .add-to-cart-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .add-to-cart-btn.added {
+            background: #22c55e !important;
+            transform: scale(0.95);
+        }
+        
+        .remove-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .remove-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .empty-wishlist {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-wishlist-icon {
+            font-size: 80px;
+            color: #d1d5db;
+            margin-bottom: 20px;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #14b8a6;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.error {
+            background: #f43f5e;
+        }
+        
+        .floating-hearts {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            pointer-events: none;
+        }
+        
+        .floating-heart {
+            position: absolute;
+            color: #14b8a6;
+            font-size: 20px;
+            animation: floatUp 2s ease-out forwards;
+            opacity: 0;
+        }
+        
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+        
+        .wishlist-hero {
+            background: linear-gradient(135deg, #2dd4bf, #06b6d4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wishlist-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hearts" width="20" height="20" patternUnits="userSpaceOnUse"><text x="10" y="15" text-anchor="middle" fill="rgba(255,255,255,0.1)" font-size="12">♥</text></pattern></defs><rect width="100" height="100" fill="url(%23hearts)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .wishlist-image {
+            width: 100%;
+            height: 192px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toast-message">Item added to wishlist!</span>
+    </div>
+
+    <!-- Floating Hearts Container -->
+    <div class="floating-hearts" id="floating-hearts"></div>
+
+    <!-- Header Section -->
+    <header class="bg-teal-50 px-10 py-2 text-sm">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <div>
+                <span class="text-gray-700">📞 Call: +8870346521, +9971234529 | ✉️ Email: snjaya23@gmail.com</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-gray-700">Follow us:</span>
+                <a href="#" class="text-cyan-600 hover:text-cyan-800 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-cyan-700 hover:text-cyan-900 transition-colors"><i class="fab fa-linkedin"></i></a>
+                <a href="#" class="text-cyan-400 hover:text-cyan-600 transition-colors"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-rose-500 hover:text-rose-700 transition-colors"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navbar -->
+    <nav class="bg-teal-400 px-10 py-4">
+        <div class="flex items-center justify-between max-w-7xl mx-auto">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-teal-300 rounded-full flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-lg">
+                        <img src="logo.jpg" alt="JSP Plants Logo" style="border-radius: 50%;">
+                    </div>
+                    <span class="text-amber-200 text-3xl font-bold">JSP PLANTS</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="wishlists.html" class="nav-link flex items-center gap-2 text-amber-200 hover:text-white transition-colors relative">
+                    <span class="text-xl">❤️</span>
+                    <span class="font-semibold">Wishlist</span>
+                    <span class="wishlist-count-badge" id="wishlist-count-badge">0</span>
+                </a>
+                <a href="deal.html" class="text-amber-200 hover:text-white transition-colors font-medium">Deals</a>
+                <a href="index.html" class="text-amber-200 hover:text-white transition-colors font-medium">← Back to Shop</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="wishlist-hero py-16 text-white relative">
+        <div class="max-w-7xl mx-auto px-10 text-center relative z-10">
+            <div class="text-6xl mb-6">❤️</div>
+            <h1 class="text-5xl font-bold mb-4">My Wishlist</h1>
+            <p class="text-xl opacity-90">Your favorite plants saved for later</p>
+            <div class="mt-6">
+                <span class="bg-white bg-opacity-20 px-4 py-2 rounded-full text-lg font-semibold">
+                    <span id="wishlist-count-display">0</span> items saved
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Wishlist Content -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-10">
+            <!-- Empty Wishlist State -->
+            <div id="empty-wishlist" class="empty-wishlist">
+                <div class="empty-wishlist-icon">💔</div>
+                <h3 class="text-2xl font-semibold text-gray-600 mb-4">Your wishlist is empty</h3>
+                <p class="text-gray-500 mb-8">Start adding plants you love to your wishlist!</p>
+                <div class="flex justify-center gap-4">
+                    <a href="index.html" class="bg-teal-400 text-white px-6 py-3 rounded-lg hover:bg-teal-500 transition-colors font-semibold">
+                        Browse Plants
+                    </a>
+                    <a href="deals.html" class="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors font-semibold">
+                        View Deals
+                    </a>
+                </div>
+            </div>
+
+            <!-- Wishlist Items -->
+            <div id="wishlist-items" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" style="display: none;">
+                <!-- Wishlist items will be populated by JavaScript -->
+            </div>
+
+            <!-- Wishlist Actions -->
+            <div id="wishlist-actions" class="mt-12 text-center" style="display: none;">
+                <div class="bg-white rounded-2xl p-8 shadow-lg max-w-2xl mx-auto">
+                    <h3 class="text-2xl font-semibold mb-4">Wishlist Actions</h3>
+                    <div class="flex justify-center gap-4">
+                        <button onclick="clearWishlist()" class="bg-red-400 text-white px-6 py-3 rounded-lg hover:bg-red-500 transition-colors font-semibold">
+                            🗑️ Clear Wishlist
+                        </button>
+                        <button onclick="shareWishlist()" class="bg-teal-400 text-white px-6 py-3 rounded-lg hover:bg-teal-500 transition-colors font-semibold">
+                            📤 Share Wishlist
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recommended Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-10">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">💡 You Might Also Like</h2>
+            
+            <div id="recommended-items" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Recommended items will be populated by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-700 text-white py-12">
+        <div class="max-w-7xl mx-auto px-10">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-teal-400 rounded-full flex items-center justify-center text-xl">🌱</div>
+                        <span class="text-xl font-bold">JSP PLANTS</span>
+                    </div>
+                    <p class="text-gray-300">Your trusted partner for all gardening needs. Quality plants, expert advice, and exceptional service.</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="index.html" class="hover:text-white transition-colors">Home</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Categories</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Products</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Services</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Customer Care</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white transition-colors">Plant Care Guide</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Shipping Info</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Returns</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
+                    <div class="flex gap-4">
+                        <a href="#" class="text-2xl hover:text-cyan-400 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-2xl hover:text-cyan-300 transition-colors"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-2xl hover:text-rose-400 transition-colors"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-2xl hover:text-cyan-600 transition-colors"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-600 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 JSP PLANTS. All rights reserved. | Designed for plant lovers</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize wishlist from localStorage
+        let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+        
+        // Recommended products (synced with index.html)
+        const recommendedProducts = [
+            {
+                id: 1,
+                name: "Monstera Deliciosa",
+                price: "$45.99",
+                originalPrice: "$65.99",
+                image: "product1.jpg",
+                category: "indoor",
+                description: "Beautiful split-leaf plant, perfect for bright indirect light"
+            },
+            {
+                id: 2,
+                name: "Snake Plant",
+                price: "$29.99",
+                originalPrice: "$39.99",
+                image: "product2.jpg",
+                category: "indoor",
+                description: "Low maintenance, perfect for beginners"
+            },
+            {
+                id: 3,
+                name: "Fiddle Leaf Fig",
+                price: "$89.99",
+                originalPrice: "$120.99",
+                image: "product3.jpg",
+                category: "indoor",
+                description: "Statement plant with large, glossy leaves"
+            },
+            {
+                id: 4,
+                name: "Peace Lily",
+                price: "$34.99",
+                originalPrice: "$49.99",
+                image: "product4.jpg",
+                category: "flowering",
+                description: "Elegant white flowers, air purifying"
+            }
+        ];
+
+        // Update wishlist count display
+        function updateWishlistCount() {
+            const wishlistBadge = document.getElementById('wishlist-count-badge');
+            const wishlistCountDisplay = document.getElementById('wishlist-count-display');
+            
+            wishlistBadge.textContent = wishlist.length;
+            if (wishlistCountDisplay) {
+                wishlistCountDisplay.textContent = wishlist.length;
+            }
+            
+            if (wishlist.length > 0) {
+                wishlistBadge.classList.add('show');
+            } else {
+                wishlistBadge.classList.remove('show');
+            }
+        }
+        
+        // Show toast notification
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${isError ? 'error' : ''} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Create floating heart animation
+        function createFloatingHeart(x, y) {
+            const heartsContainer = document.getElementById('floating-hearts');
+            const heart = document.createElement('div');
+            heart.className = 'floating-heart';
+            heart.textContent = '♥';
+            heart.style.left = x + 'px';
+            heart.style.top = y + 'px';
+            
+            heartsContainer.appendChild(heart);
+            
+            setTimeout(() => {
+                heart.remove();
+            }, 2000);
+        }
+        
+        // Add to cart functionality
+        function addToCart(button) {
+            const productCard = button.closest('.wishlist-card');
+            const productName = productCard.dataset.productName;
+            const productPrice = productCard.dataset.productPrice;
+            const productImage = productCard.dataset.productImage;
+            const originalPrice = productCard.dataset.originalPrice || productPrice;
+            
+            // Get or initialize cart from localStorage
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            const product = {
+                id: parseInt(productCard.dataset.productId) || Date.now(),
+                name: productName,
+                price: productPrice,
+                originalPrice: originalPrice,
+                image: productImage,
+                quantity: 1
+            };
+            
+            // Check if item already exists in cart
+            const existingIndex = cart.findIndex(item => item.id === product.id);
+            
+            if (existingIndex > -1) {
+                // Increase quantity if item exists
+                cart[existingIndex].quantity += 1;
+                showToast(`${productName} quantity updated in cart!`);
+            } else {
+                // Add new item to cart
+                cart.push(product);
+                showToast(`${productName} added to cart!`);
+            }
+            
+            // Save cart to localStorage
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // Visual feedback
+            const originalText = button.textContent;
+            button.textContent = 'Added! 🎉';
+            button.classList.add('added');
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('added');
+            }, 2000);
+        }
+        
+        // Toggle wishlist functionality
+        function toggleWishlist(heartButton) {
+            const productCard = heartButton.closest('.wishlist-card');
+            const productName = productCard.dataset.productName;
+            const productPrice = productCard.dataset.productPrice;
+            const productImage = productCard.dataset.productImage;
+            const originalPrice = productCard.dataset.originalPrice || productPrice;
+            const productId = parseInt(productCard.dataset.productId) || Date.now();
+            
+            const product = {
+                id: productId,
+                name: productName,
+                price: productPrice,
+                originalPrice: originalPrice,
+                image: productImage,
+                dateAdded: new Date().toISOString()
+            };
+            
+            const existingIndex = wishlist.findIndex(item => item.id === product.id);
+            
+            if (existingIndex > -1) {
+                // Remove from wishlist
+                wishlist.splice(existingIndex, 1);
+                heartButton.classList.remove('active');
+                showToast(`${productName} removed from wishlist`);
+            } else {
+                // Add to wishlist
+                wishlist.push(product);
+                heartButton.classList.add('active');
+                showToast(`${productName} added to wishlist!`);
+                
+                // Create floating heart animation
+                const rect = heartButton.getBoundingClientRect();
+                createFloatingHeart(rect.left, rect.top);
+            }
+            
+            localStorage.setItem('wishlist', JSON.stringify(wishlist));
+            updateWishlistCount();
+            displayWishlistItems();
+            displayRecommendedItems();
+        }
+        
+        // Display wishlist items
+        function displayWishlistItems() {
+            const wishlistContainer = document.getElementById('wishlist-items');
+            const emptyWishlist = document.getElementById('empty-wishlist');
+            const wishlistActions = document.getElementById('wishlist-actions');
+            
+            if (wishlist.length === 0) {
+                wishlistContainer.style.display = 'none';
+                wishlistActions.style.display = 'none';
+                emptyWishlist.style.display = 'block';
+                return;
+            }
+            
+            wishlistContainer.style.display = 'grid';
+            wishlistActions.style.display = 'block';
+            emptyWishlist.style.display = 'none';
+            
+            wishlistContainer.innerHTML = wishlist.map(item => {
+                const savings = parseFloat(item.originalPrice.replace('$', '')) - parseFloat(item.price.replace('$', ''));
+                const dateAdded = new Date(item.dateAdded).toLocaleDateString();
+                
+                return `
+                    <div class="wishlist-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-id="${item.id}" data-product-name="${item.name}" data-product-price="${item.price}" data-product-image="${item.image}" data-original-price="${item.originalPrice}">
+                        <div class="wishlist-badge bg-teal-400 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            ❤️ SAVED
+                        </div>
+                        <img src="${item.image}" alt="${item.name}" class="wishlist-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold mb-2">${item.name}</h3>
+                            <p class="text-gray-600 text-sm mb-3">Saved to your wishlist</p>
+                            
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <span class="text-2xl font-bold text-teal-500">${item.price}</span>
+                                    ${item.originalPrice !== item.price ? `<span class="text-sm text-gray-500 line-through ml-2">${item.originalPrice}</span>` : ''}
+                                </div>
+                                ${savings > 0 ? `<span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $${savings.toFixed(2)}</span>` : ''}
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <button class="add-to-cart-btn flex-1 bg-teal-500 text-white py-2 rounded-lg hover:bg-teal-600 transition-colors font-semibold" onclick="addToCart(this)">
+                                    🛒 Add to Cart
+                                </button>
+                                <button class="remove-btn px-3 py-2 border border-gray-300 rounded-lg hover:bg-red-100 transition-colors" onclick="removeFromWishlist('${item.id}')">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Display recommended items
+        function displayRecommendedItems() {
+            const recommendedContainer = document.getElementById('recommended-items');
+            
+            recommendedContainer.innerHTML = recommendedProducts.map(item => {
+                const savings = parseFloat(item.originalPrice.replace('$', '')) - parseFloat(item.price.replace('$', ''));
+                const isInWishlist = wishlist.some(w => w.id === item.id);
+                
+                return `
+                    <div class="wishlist-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-id="${item.id}" data-product-name="${item.name}" data-product-price="${item.price}" data-product-image="${item.image}" data-original-price="${item.originalPrice}">
+                        <img src="${item.image}" alt="${item.name}" class="wishlist-image" onerror="this.src='https://via.placeholder.com/192?text=Plant'">
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold mb-2">${item.name}</h3>
+                            <p class="text-gray-600 text-sm mb-3">${item.description}</p>
+                            
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <span class="text-2xl font-bold text-teal-500">${item.price}</span>
+                                    <span class="text-sm text-gray-500 line-through ml-2">${item.originalPrice}</span>
+                                </div>
+                                <span class="bg-teal-100 text-teal-500 px-2 py-1 rounded text-xs font-bold">SAVE $${savings.toFixed(2)}</span>
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <button class="add-to-cart-btn flex-1 bg-teal-500 text-white py-2 rounded-lg hover:bg-teal-600 transition-colors font-semibold" onclick="addToCart(this)">
+                                    Add to Cart
+                                </button>
+                                <button class="heart-btn px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-xl ${isInWishlist ? 'active' : ''}" onclick="toggleWishlist(this)">
+                                    ♥
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Remove item from wishlist
+        function removeFromWishlist(productId) {
+            const index = wishlist.findIndex(item => item.id == productId);
+            if (index > -1) {
+                const productName = wishlist[index].name;
+                wishlist.splice(index, 1);
+                localStorage.setItem('wishlist', JSON.stringify(wishlist));
+                updateWishlistCount();
+                displayWishlistItems();
+                displayRecommendedItems();
+                showToast(`${productName} removed from wishlist`);
+            }
+        }
+        
+        // Clear entire wishlist
+        function clearWishlist() {
+            if (wishlist.length === 0) {
+                showToast('Your wishlist is already empty!', true);
+                return;
+            }
+            
+            if (confirm('Are you sure you want to clear your entire wishlist?')) {
+                wishlist = [];
+                localStorage.setItem('wishlist', JSON.stringify(wishlist));
+                updateWishlistCount();
+                displayWishlistItems();
+                displayRecommendedItems();
+                showToast('Wishlist cleared!');
+            }
+        }
+        
+        // Share wishlist
+        function shareWishlist() {
+            if (wishlist.length === 0) {
+                showToast('Your wishlist is empty!', true);
+                return;
+            }
+            
+            const wishlistText = `Check out my plant wishlist from JSP PLANTS:\n\n${wishlist.map(item => `${item.name} - ${item.price}`).join('\n')}\n\nVisit JSP PLANTS to see more amazing plants!`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My Plant Wishlist - JSP PLANTS',
+                    text: wishlistText,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback - copy to clipboard
+                navigator.clipboard.writeText(wishlistText).then(() => {
+                    showToast('Wishlist copied to clipboard!');
+                });
+            }
+        }
+        
+        // Update heart button states based on wishlist
+        function updateHeartButtonStates() {
+            const heartButtons = document.querySelectorAll('.heart-btn');
+            heartButtons.forEach(button => {
+                const productCard = button.closest('.wishlist-card');
+                if (productCard) {
+                    const productId = parseInt(productCard.dataset.productId);
+                    const isInWishlist = wishlist.some(item => item.id === productId);
+                    
+                    if (isInWishlist) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                }
+            });
+        }
+        
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            updateWishlistCount();
+            displayWishlistItems();
+            displayRecommendedItems();
+            updateHeartButtonStates();
+        });
+        
+        // Initialize immediately for faster loading
+        updateWishlistCount();
+        displayWishlistItems();
+        displayRecommendedItems();
+    </script>
+</body>
+</html>

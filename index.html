@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSP PLANTS - Premium Plant Store</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cart-count-badge, .wishlist-count-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #14b8a6;
+            color: #fff;
+            border-radius: 50%;
+            font-size: 12px;
+            padding: 2px 6px;
+            min-width: 20px;
+            text-align: center;
+            z-index: 2;
+            display: none;
+        }
+        
+        .cart-count-badge.show, .wishlist-count-badge.show {
+            display: block;
+        }
+
+        .product-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        
+        .heart-btn {
+            transition: all 0.3s ease;
+            color: #6b7280;
+        }
+        
+        .heart-btn.active {
+            color: #f43f5e;
+            transform: scale(1.1);
+        }
+        
+        .heart-btn:hover {
+            color: #f43f5e;
+            transform: scale(1.05);
+        }
+        
+        .add-to-cart-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .add-to-cart-btn.added {
+            background: #22c55e !important;
+            transform: scale(0.95);
+        }
+        
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+            height: 500px;
+        }
+        
+        .carousel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: translateX(100%); /* Start off-screen to the right */
+            transition: transform 0.8s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            background-color: rgba(0, 0, 0, 0.4); /* Overlay for text contrast */
+            background-blend-mode: overlay;
+        }
+        
+        .carousel-slide.active {
+            transform: translateX(0); /* Center */
+        }
+        
+        .carousel-slide.exiting {
+            transform: translateX(-100%); /* Exit to the left */
+        }
+        
+        .carousel-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .carousel-dot.active {
+            background: #14b8a6; /* Matches teal theme */
+        }
+        
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .floating-leaf {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 24px;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #14b8a6;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.error {
+            background: #f43f5e;
+        }
+        
+        .category-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .deals-banner {
+            background: linear-gradient(45deg, #f59e0b, #fb923c);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+        }
+        
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .search-result-item:hover {
+            background-color: #f9fafb;
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-image-container {
+            height: 60%;
+            position: relative;
+        }
+
+        .product-details {
+            height: 40%;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        .product-details h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-details p {
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-details .flex.justify-between {
+            margin-bottom: 6px;
+            font-size: 0.875rem;
+        }
+
+        .product-details .flex.gap-2 {
+            margin-top: auto;
+        }
+
+        .add-to-cart-btn {
+            font-size: 0.875rem;
+            padding: 6px;
+        }
+
+        .heart-btn:not(.absolute) {
+            font-size: 0.875rem;
+            padding: 6px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toast-message">Item added to cart!</span>
+    </div>
+
+    <!-- Header Section -->
+    <header class="bg-teal-50 px-10 py-2 text-sm">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <div>
+                <span class="text-gray-700">📞 Call: +8870346521, +9971234529 | ✉️ Email: snjaya23@gmail.com</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-gray-700">Follow us:</span>
+                <a href="#" class="text-cyan-600 hover:text-cyan-800 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-cyan-700 hover:text-cyan-900 transition-colors"><i class="fab fa-linkedin"></i></a>
+                <a href="#" class="text-cyan-400 hover:text-cyan-600 transition-colors"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-rose-500 hover:text-rose-700 transition-colors"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navbar -->
+    <nav class="bg-teal-400 px-10 py-4">
+        <div class="flex items-center justify-between max-w-7xl mx-auto">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-teal-300 rounded-full flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-lg">
+                        <img src="logo.jpg" alt="JSP Plants Logo" style="border-radius: 50%;">
+                    </div>
+                    <span class="text-amber-200 text-3xl font-bold">JSP PLANTS</span>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="search-container ml-8">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="search-input"
+                            placeholder="Search plants..." 
+                            class="w-80 px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                            onkeyup="searchProducts()"
+                        >
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <div id="search-results" class="search-results"></div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="wishlists.html" class="nav-link flex items-center gap-2 text-amber-200 hover:text-white transition-colors relative">
+                    <span class="text-xl">❤️</span>
+                    <span class="font-semibold">Wishlist</span>
+                    <span class="wishlist-count-badge" id="wishlist-count-badge">0</span>
+                </a>
+                <a href="profile.html" class="nav-link flex items-center gap-2 text-amber-200 hover:text-white transition-colors">
+                    <span class="text-xl">👤</span>
+                    <span class="font-semibold">Profile</span>
+                </a>
+                <a href="carts.html" class="nav-link flex items-center gap-2 text-amber-200 hover:text-white transition-colors relative">
+                    <span class="text-xl">🛒</span>
+                    <span class="font-semibold">Cart</span>
+                    <span class="cart-count-badge" id="cart-count-badge">0</span>
+                </a>
+                <a href="deal.html" class="text-amber-200 hover:text-white transition-colors font-medium">Deals</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Right-to-Left Carousel -->
+    <section class="hero-section py-20 text-white relative">
+        <div class="carousel">
+            <div class="carousel-slide active" style="background-image: url('slider1.jpg');"></div>
+            <div class="carousel-slide" style="background-image: url('slider2.jpg');"></div>
+            <div class="carousel-slide" style="background-image: url('slider3.jpg');"></div>
+        </div>
+        <div class="carousel-dots">
+            <span class="carousel-dot active" onclick="goToSlide(0)"></span>
+            <span class="carousel-dot" onclick="goToSlide(1)"></span>
+            <span class="carousel-dot" onclick="goToSlide(2)"></span>
+        </div>
+        <div class="floating-elements">
+            <div class="floating-leaf" style="top: 20%; left: 10%; animation-delay: 0s;">🍃</div>
+            <div class="floating-leaf" style="top: 60%; left: 80%; animation-delay: 2s;">🌿</div>
+            <div class="floating-leaf" style="top: 30%; left: 70%; animation-delay: 4s;">🌱</div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-10 text-center relative z-10">
+            <h1 class="text-6xl font-bold mb-6">Welcome to JSP PLANTS</h1>
+            <p class="text-2xl mb-8 opacity-90">Transform your space with our premium collection of plants</p>
+            <div class="flex justify-center gap-4">
+                <button onclick="scrollToProducts()" class="bg-amber-300 text-gray-800 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-amber-200 transition-colors">
+                    🌿 Shop Now
+                </button>
+                <a href="deal.html" class="deals-banner text-white px-8 py-4 rounded-lg text-lg font-semibold hover:opacity-90 transition-opacity">
+                    🔥 Deals
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-10">
+            <h2 class="text-4xl font-bold text-center mb-12 text-gray-800">Shop by Category</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="category-card bg-teal-50 rounded-2xl p-8 text-center" onclick="filterProducts('indoor')">
+                    <div class="text-6xl mb-4">🏠</div>
+                    <h3 class="text-xl font-semibold mb-2">Indoor Plants</h3>
+                    <p class="text-gray-600">Perfect for your home</p>
+                </div>
+                
+                <div class="category-card bg-cyan-50 rounded-2xl p-8 text-center" onclick="filterProducts('outdoor')">
+                    <div class="text-6xl mb-4">🌳</div>
+                    <h3 class="text-xl font-semibold mb-2">Outdoor Plants</h3>
+                    <p class="text-gray-600">Garden essentials</p>
+                </div>
+                
+                <div class="category-card bg-blue-50 rounded-2xl p-8 text-center" onclick="filterProducts('flowering')">
+                    <div class="text-6xl mb-4">🌸</div>
+                    <h3 class="text-xl font-semibold mb-2">Flowering Plants</h3>
+                    <p class="text-gray-600">Colorful blooms</p>
+                </div>
+                
+                <div class="category-card bg-amber-50 rounded-2xl p-8 text-center" onclick="filterProducts('succulents')">
+                    <div class="text-6xl mb-4">🌵</div>
+                    <h3 class="text-xl font-semibold mb-2">Succulents</h3>
+                    <p class="text-gray-600">Low maintenance</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="products" class="py-16 bg-gray-100">
+        <div class="max-w-7xl mx-auto px-10">
+            <div class="flex justify-between items-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800">Featured Plants</h2>
+                <div class="flex gap-4">
+                    <button onclick="filterProducts('all')" class="filter-btn bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors">All</button>
+                    <button onclick="filterProducts('indoor')" class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">Indoor</button>
+                    <button onclick="filterProducts('outdoor')" class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">Outdoor</button>
+                    <button onclick="filterProducts('flowering')" class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">Flowering</button>
+                    <button onclick="filterProducts('succulents')" class="filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">Succulents</button>
+                </div>
+            </div>
+            
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <!-- Products will be populated by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-10">
+            <h2 class="text-4xl font-bold text-center mb-12 text-gray-800">Why Choose JSP PLANTS?</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center p-8">
+                    <div class="text-5xl mb-4">🚚</div>
+                    <h3 class="text-xl font-semibold mb-4">Free Delivery</h3>
+                    <p class="text-gray-600">Free delivery on orders above ₹500. Fast and secure shipping to your doorstep.</p>
+                </div>
+                
+                <div class="text-center p-8">
+                    <div class="text-5xl mb-4">🌱</div>
+                    <h3 class="text-xl font-semibold mb-4">Healthy Plants</h3>
+                    <p class="text-gray-600">All plants are carefully selected and nurtured to ensure they reach you in perfect condition.</p>
+                </div>
+                
+                <div class="text-center p-8">
+                    <div class="text-5xl mb-4">💬</div>
+                    <h3 class="text-xl font-semibold mb-4">Expert Support</h3>
+                    <p class="text-gray-600">Get expert advice on plant care and gardening tips from our experienced team.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="py-16 bg-teal-500 text-white">
+        <div class="max-w-7xl mx-auto px-10 text-center">
+            <h2 class="text-4xl font-bold mb-4">Stay Updated</h2>
+            <p class="text-xl mb-8 opacity-90">Get the latest plant care tips and exclusive offers</p>
+            
+            <div class="max-w-md mx-auto flex gap-4">
+                <input type="email" placeholder="Enter your email" class="flex-1 px-4 py-3 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-300">
+                <button class="bg-amber-300 text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-amber-200 transition-colors">
+                    Subscribe
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-700 text-white py-12">
+        <div class="max-w-7xl mx-auto px-10">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-teal-400 rounded-full flex items-center justify-center text-xl">🌱</div>
+                        <span class="text-xl font-bold">JSP PLANTS</span>
+                    </div>
+                    <p class="text-gray-300">Your trusted partner for all gardening needs. Quality plants, expert advice, and exceptional service.</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white transition-colors">Home</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Categories</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Products</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Services</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Customer Care</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white transition-colors">Plant Care Guide</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Shipping Info</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Returns</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Follow Us</h4>
+                    <div class="flex gap-4">
+                        <a href="#" class="text-2xl hover:text-cyan-400 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-2xl hover:text-cyan-300 transition-colors"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-2xl hover:text-rose-400 transition-colors"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-2xl hover:text-cyan-600 transition-colors"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-600 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 JSP PLANTS. All rights reserved. | Designed with for plant lovers</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Carousel functionality (right-to-left)
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.carousel-dot');
+        
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                if (i === index) {
+                    slide.classList.add('active');
+                    slide.classList.remove('exiting');
+                } else if (slide.classList.contains('active')) {
+                    slide.classList.remove('active');
+                    slide.classList.add('exiting');
+                } else {
+                    slide.classList.remove('active', 'exiting');
+                }
+            });
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+            currentSlide = index;
+        }
+        
+        function goToSlide(index) {
+            if (index !== currentSlide) {
+                showSlide(index);
+            }
+        }
+        
+        function nextSlide() {
+            const nextIndex = (currentSlide + 1) % slides.length;
+            showSlide(nextIndex);
+        }
+        
+        // Auto-slide every 5 seconds
+        setInterval(nextSlide, 5000);
+
+        // Updated product data with local image paths
+        const products = [
+            {
+                id: 1,
+                name: "Monstera Deliciosa",
+                price: "$45.99",
+                originalPrice: "$65.99",
+                image: "product1.jpg",
+                category: "indoor",
+                description: "Beautiful split-leaf plant, perfect for bright indirect light"
+            },
+            {
+                id: 2,
+                name: "Snake Plant",
+                price: "$29.99",
+                originalPrice: "$39.99",
+                image: "product2.jpg",
+                category: "indoor",
+                description: "Low maintenance, perfect for beginners"
+            },
+            {
+                id: 3,
+                name: "Fiddle Leaf Fig",
+                price: "$89.99",
+                originalPrice: "$120.99",
+                image: "product3.jpg",
+                category: "indoor",
+                description: "Statement plant with large, glossy leaves"
+            },
+            {
+                id: 4,
+                name: "Peace Lily",
+                price: "$34.99",
+                originalPrice: "$49.99",
+                image: "product4.jpg",
+                category: "flowering",
+                description: "Elegant white flowers, air purifying"
+            },
+            {
+                id: 5,
+                name: "Rubber Plant",
+                price: "$39.99",
+                originalPrice: "$55.99",
+                image: "product5.jpg",
+                category: "indoor",
+                description: "Glossy leaves, easy to care for"
+            },
+            {
+                id: 6,
+                name: "Aloe Vera",
+                price: "$19.99",
+                originalPrice: "$29.99",
+                image: "product6.jpg",
+                category: "succulents",
+                description: "Medicinal plant, drought tolerant"
+            },
+            {
+                id: 7,
+                name: "Rose Bush",
+                price: "$49.99",
+                originalPrice: "$69.99",
+                image: "cat1.jpg",
+                category: "flowering",
+                description: "Classic red roses for your garden"
+            },
+            {
+                id: 8,
+                name: "Lavender",
+                price: "$24.99",
+                originalPrice: "$34.99",
+                image: "cat2.jpg",
+                category: "outdoor",
+                description: "Fragrant purple flowers, attracts bees"
+            },
+            {
+                id: 9,
+                name: "Jade Plant",
+                price: "$22.99",
+                originalPrice: "$32.99",
+                image: "cat3.jpg",
+                category: "succulents",
+                description: "Lucky plant, thick fleshy leaves"
+            },
+            {
+                id: 10,
+                name: "Sunflower",
+                price: "$15.99",
+                originalPrice: "$25.99",
+                image: "cat4.jpg",
+                category: "flowering",
+                description: "Bright yellow flowers, grows tall"
+            },
+            {
+                id: 11,
+                name: "Cactus Mix",
+                price: "$27.99",
+                originalPrice: "$39.99",
+                image: "office.jpg",
+                category: "succulents",
+                description: "Variety pack of small cacti"
+            },
+            {
+                id: 12,
+                name: "Bamboo Palm",
+                price: "$59.99",
+                originalPrice: "$79.99",
+                image: "house.webp",
+                category: "indoor",
+                description: "Tropical palm, air purifying"
+            }
+        ];
+
+        // Initialize cart and wishlist from localStorage
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+        let currentFilter = 'all';
+
+        // Update cart and wishlist count displays
+        function updateCounts() {
+            const cartBadge = document.getElementById('cart-count-badge');
+            const wishlistBadge = document.getElementById('wishlist-count-badge');
+            
+            cartBadge.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+            wishlistBadge.textContent = wishlist.length;
+            
+            if (cart.length > 0) {
+                cartBadge.classList.add('show');
+            } else {
+                cartBadge.classList.remove('show');
+            }
+            
+            if (wishlist.length > 0) {
+                wishlistBadge.classList.add('show');
+            } else {
+                wishlistBadge.classList.remove('show');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${isError ? 'error' : ''} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Add to cart functionality
+        function addToCart(button) {
+            const productCard = button.closest('.product-card');
+            const productId = parseInt(productCard.dataset.productId);
+            const product = products.find(p => p.id === productId);
+            
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+                showToast(`${product.name} quantity updated in cart!`);
+            } else {
+                cart.push({
+                    id: productId,
+                    name: product.name,
+                    price: product.price,
+                    originalPrice: product.originalPrice,
+                    image: product.image,
+                    quantity: 1
+                });
+                showToast(`${product.name} added to cart!`);
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCounts();
+            
+            // Visual feedback
+            const originalText = button.textContent;
+            button.textContent = 'Added! 🎉';
+            button.classList.add('added');
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('added');
+            }, 2000);
+        }
+
+        // Toggle wishlist functionality
+        function toggleWishlist(heartButton) {
+            const productCard = heartButton.closest('.product-card');
+            const productId = parseInt(productCard.dataset.productId);
+            const product = products.find(p => p.id === productId);
+            
+            const existingIndex = wishlist.findIndex(item => item.id === productId);
+            
+            if (existingIndex > -1) {
+                wishlist.splice(existingIndex, 1);
+                heartButton.classList.remove('active');
+                showToast(`${product.name} removed from wishlist`);
+            } else {
+                wishlist.push({
+                    id: productId,
+                    name: product.name,
+                    price: product.price,
+                    originalPrice: product.originalPrice,
+                    image: product.image,
+                    dateAdded: new Date().toISOString()
+                });
+                heartButton.classList.add('active');
+                showToast(`${product.name} added to wishlist!`);
+            }
+            
+            localStorage.setItem('wishlist', JSON.stringify(wishlist));
+            updateCounts();
+        }
+
+        // Filter products by category
+        function filterProducts(category) {
+            currentFilter = category;
+            
+            // Update filter button styles
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(btn => {
+                btn.classList.remove('bg-teal-500', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            
+            if (event && event.target) {
+                event.target.classList.remove('bg-gray-200', 'text-gray-700');
+                event.target.classList.add('bg-teal-500', 'text-white');
+            }
+            
+            displayProducts(category);
+        }
+
+        // Display products
+        function displayProducts(filter = 'all') {
+            const productsGrid = document.getElementById('products-grid');
+            const filteredProducts = filter === 'all' ? products : products.filter(p => p.category === filter);
+            console.log('Filtered Products:', filteredProducts); // Debug
+            productsGrid.innerHTML = filteredProducts.map(product => {
+                const savings = parseFloat(product.originalPrice.replace('$', '')) - parseFloat(product.price.replace('$', ''));
+                const isInWishlist = wishlist.some(item => item.id === product.id);
+                
+                return `
+                    <div class="product-card bg-white rounded-2xl shadow-lg overflow-hidden" data-product-id="${product.id}">
+                        <div class="product-image-container relative">
+                            <img src="${product.image}" alt="${product.name}" class="product-image">
+                            <button class="heart-btn absolute top-4 right-4 text-2xl ${isInWishlist ? 'active' : ''}" onclick="toggleWishlist(this)">
+                                ♥
+                            </button>
+                        </div>
+                        <div class="product-details">
+                            <h3>${product.name}</h3>
+                            <p>${product.description}</p>
+                            
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-2xl font-bold text-teal-500">${product.price}</span>
+                                    <span class="text-sm text-gray-500 line-through ml-2">${product.originalPrice}</span>
+                                </div>
+                                <span class="bg-teal-100 text-teal-600 px-2 py-1 rounded text-xs font-bold">SAVE $${savings.toFixed(2)}</span>
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <button class="add-to-cart-btn flex-1 bg-teal-500 text-white py-2 rounded-lg hover:bg-teal-600 transition-colors font-semibold" onclick="addToCart(this)">
+                                    Add to Cart
+                                </button>
+                                <button class="heart-btn px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-xl ${isInWishlist ? 'active' : ''}" onclick="toggleWishlist(this)">
+                                    ♥
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Search functionality
+        function searchProducts() {
+            const searchInput = document.getElementById('search-input');
+            const searchResults = document.getElementById('search-results');
+            const query = searchInput.value.toLowerCase().trim();
+            
+            if (query.length === 0) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            const filteredProducts = products.filter(product => 
+                product.name.toLowerCase().includes(query) ||
+                product.description.toLowerCase().includes(query) ||
+                product.category.toLowerCase().includes(query)
+            );
+            console.log('Search Query:', query, 'Results:', filteredProducts); // Debug
+            
+            if (filteredProducts.length > 0) {
+                searchResults.innerHTML = filteredProducts.map(product => `
+                    <div class="search-result-item" onclick="selectSearchResult('${product.name}', '${product.category}')">
+                        <div class="flex items-center gap-3">
+                            <img src="${product.image}" alt="${product.name}" class="w-12 h-12 object-cover rounded">
+                            <div>
+                                <div class="font-semibold">${product.name}</div>
+                                <div class="text-sm text-gray-600">${product.price} - ${product.description}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                searchResults.style.display = 'block';
+            } else {
+                searchResults.innerHTML = '<div class="search-result-item text-gray-500">No products found</div>';
+                searchResults.style.display = 'block';
+            }
+        }
+
+        // Select search result
+        function selectSearchResult(productName, category) {
+            const searchInput = document.getElementById('search-input');
+            const searchResults = document.getElementById('search-results');
+            
+            searchInput.value = productName;
+            searchResults.style.display = 'none';
+            
+            // Filter by category and scroll to products
+            filterProducts(category);
+            scrollToProducts();
+        }
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(event) {
+            const searchContainer = document.querySelector('.search-container');
+            const searchResults = document.getElementById('search-results');
+            
+            if (!searchContainer.contains(event.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // Scroll to products section
+        function scrollToProducts() {
+            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page Loaded, Initializing Products'); // Debug
+            displayProducts();
+            updateCounts();
+            showSlide(0); // Initialize carousel
+        });
+
+        // Initialize immediately for faster loading
+        console.log('Initial Products:', products); // Debug
+        displayProducts();
+        updateCounts();
+    </script>
+</body>
+</html>

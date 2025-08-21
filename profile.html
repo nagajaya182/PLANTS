@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - JSP PLANTS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .profile-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="plants" width="30" height="30" patternUnits="userSpaceOnUse"><text x="15" y="20" text-anchor="middle" fill="rgba(255,255,255,0.1)" font-size="16">🌱</text></pattern></defs><rect width="100" height="100" fill="url(%23plants)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .auth-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .profile-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .order-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #10b981;
+        }
+        
+        .order-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .status-badge {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-delivered {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .status-pending {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .status-processing {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.error {
+            background: #ef4444;
+        }
+        
+        .profile-avatar {
+            background: linear-gradient(135deg, #10b981, #059669);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-avatar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .tab-button {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .tab-button.active {
+            background: #10b981;
+            color: white;
+        }
+        
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #10b981;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+        
+        .floating-plant {
+            position: absolute;
+            color: rgba(255,255,255,0.2);
+            font-size: 24px;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toast-message">Welcome!</span>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="order-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">Order Details</h3>
+                <button onclick="closeModal('order-details-modal')" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div id="order-details-content">
+                <!-- Order details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Address Modal -->
+    <div id="add-address-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">Add New Address</h3>
+                <button onclick="closeModal('add-address-modal')" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <form onsubmit="saveNewAddress(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2">Address Type</label>
+                        <select id="address-type" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">Select type</option>
+                            <option value="Home">Home</option>
+                            <option value="Office">Office</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
+                        <input type="text" id="address-name" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter full name">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2">Phone Number</label>
+                        <input type="tel" id="address-phone" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter phone number">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2">Street Address</label>
+                        <input type="text" id="address-street" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter street address">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">City</label>
+                            <input type="text" id="address-city" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="City">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">ZIP Code</label>
+                            <input type="text" id="address-zip" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="ZIP">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="address-default" class="mr-2">
+                            <span class="text-sm text-gray-700">Set as default address</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" onclick="closeModal('add-address-modal')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 btn-primary text-white py-3 rounded-lg font-semibold">
+                        💾 Save Address
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="bg-green-100 px-10 py-2 text-sm">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <div>
+                <span class="text-gray-700">📞 Call: +8870346521, +9971234529 | ✉️ Email: snjaya23@gmail.com</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-gray-700">Follow us:</span>
+                <a href="#" class="text-blue-600 hover:text-blue-800 transition-colors"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-blue-700 hover:text-blue-900 transition-colors"><i class="fab fa-linkedin"></i></a>
+                <a href="#" class="text-blue-400 hover:text-blue-600 transition-colors"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-pink-500 hover:text-pink-700 transition-colors"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navbar -->
+    <nav class="bg-teal-600 px-10 py-4">
+        <div class="flex items-center justify-between max-w-7xl mx-auto">
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-lg">
+                         <img src="logo.jpg" alt="" style="border-radius: 50%;">
+                    </div>
+                    <span class="text-yellow-300 text-3xl font-bold">JSP PLANTS</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="wishlists.html" class="text-white hover:text-yellow-300 transition-colors font-medium">❤️ Wishlist</a>
+                <a href="profile.html" class="text-white hover:text-yellow-300  transition-colors font-medium">👤 Profile</a>
+                <a href="deal.html" class="text-white hover:text-yellow-300 transition-colors font-medium">Deals</a>
+                <a href="index.html" class="text-white hover:text-yellow-300 transition-colors font-medium">← Back to Shop</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Profile Container -->
+    <div class="profile-container">
+        <div class="floating-elements">
+            <div class="floating-plant" style="top: 10%; left: 5%; animation-delay: 0s;">🌿</div>
+            <div class="floating-plant" style="top: 20%; right: 10%; animation-delay: 2s;">🍃</div>
+            <div class="floating-plant" style="top: 70%; left: 15%; animation-delay: 4s;">🌱</div>
+            <div class="floating-plant" style="bottom: 20%; right: 20%; animation-delay: 1s;">🌸</div>
+        </div>
+
+        <!-- Authentication Section (Login/Register) -->
+        <div id="auth-section" class="min-h-screen flex items-center justify-center p-10 relative z-10">
+            <div class="auth-card rounded-3xl shadow-2xl p-8 w-full max-w-md">
+                <!-- Login Form -->
+                <div id="login-form">
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-lg">
+                            🌱
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome Back!</h2>
+                        <p class="text-gray-600">Sign in to your JSP PLANTS account</p>
+                    </div>
+
+                    <form onsubmit="handleLogin(event)">
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Email Address</label>
+                            <input type="email" id="login-email" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter your email">
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Password</label>
+                            <input type="password" id="login-password" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter your password">
+                        </div>
+
+                        <div class="flex items-center justify-between mb-6">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2">
+                                <span class="text-sm text-gray-600">Remember me</span>
+                            </label>
+                            <a href="#" class="text-sm text-green-600 hover:text-green-800">Forgot password?</a>
+                        </div>
+
+                        <button type="submit" class="btn-primary w-full text-white py-3 rounded-lg font-semibold text-lg">
+                            🌿 Sign In
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-6">
+                        <p class="text-gray-600">Don't have an account? 
+                            <button onclick="showRegisterForm()" class="text-green-600 hover:text-green-800 font-semibold">Sign up here</button>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-form" style="display: none;">
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-lg">
+                            🌱
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">Join JSP PLANTS!</h2>
+                        <p class="text-gray-600">Create your account to start your plant journey</p>
+                    </div>
+
+                    <form onsubmit="handleRegister(event)">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
+                            <input type="text" id="register-name" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter your full name">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Email Address</label>
+                            <input type="email" id="register-email" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter your email">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Phone Number</label>
+                            <input type="tel" id="register-phone" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter your phone number">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Password</label>
+                            <input type="password" id="register-password" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Create a password">
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">Confirm Password</label>
+                            <input type="password" id="register-confirm-password" required class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Confirm your password">
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="flex items-center">
+                                <input type="checkbox" required class="mr-2">
+                                <span class="text-sm text-gray-600">I agree to the <a href="#" class="text-green-600 hover:text-green-800">Terms & Conditions</a></span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-primary w-full text-white py-3 rounded-lg font-semibold text-lg">
+                            🌱 Create Account
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-6">
+                        <p class="text-gray-600">Already have an account? 
+                            <button onclick="showLoginForm()" class="text-green-600 hover:text-green-800 font-semibold">Sign in here</button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Dashboard Section -->
+        <div id="profile-section" class="min-h-screen p-10 relative z-10" style="display: none;">
+            <div class="max-w-6xl mx-auto">
+                <!-- Profile Header -->
+                <div class="profile-card rounded-3xl shadow-2xl p-8 mb-8">
+                    <div class="flex items-center gap-6 mb-6">
+                        <div class="profile-avatar w-24 h-24 rounded-full flex items-center justify-center text-4xl text-white shadow-lg">
+                            👤
+                        </div>
+                        <div class="flex-1">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2" id="profile-name">Welcome, Plant Lover!</h1>
+                            <p class="text-gray-600 mb-2" id="profile-email">your.email@example.com</p>
+                            <p class="text-sm text-gray-500">Member since <span id="member-since">2024</span></p>
+                        </div>
+                        <div class="text-right">
+                            <button onclick="logout()" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors font-semibold">
+                                🚪 Logout
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Profile Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="text-center p-4 bg-green-50 rounded-xl">
+                            <div class="text-3xl mb-2">📦</div>
+                            <div class="text-2xl font-bold text-green-600" id="total-orders">0</div>
+                            <div class="text-sm text-gray-600">Total Orders</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded-xl">
+                            <div class="text-3xl mb-2">💰</div>
+                            <div class="text-2xl font-bold text-blue-600" id="total-spent">$0.00</div>
+                            <div class="text-sm text-gray-600">Total Spent</div>
+                        </div>
+                        <div class="text-center p-4 bg-purple-50 rounded-xl">
+                            <div class="text-3xl mb-2">🌱</div>
+                            <div class="text-2xl font-bold text-purple-600" id="plants-owned">0</div>
+                            <div class="text-sm text-gray-600">Plants Owned</div>
+                        </div>
+                        <div class="text-center p-4 bg-yellow-50 rounded-xl">
+                            <div class="text-3xl mb-2">⭐</div>
+                            <div class="text-2xl font-bold text-yellow-600">Gold</div>
+                            <div class="text-sm text-gray-600">Member Status</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Tabs -->
+                <div class="profile-card rounded-3xl shadow-2xl overflow-hidden">
+                    <div class="flex border-b border-gray-200">
+                        <button onclick="showTab('orders')" class="tab-button flex-1 py-4 px-6 text-center font-semibold transition-colors active">
+                            📦 Order History
+                        </button>
+                        <button onclick="showTab('profile-info')" class="tab-button flex-1 py-4 px-6 text-center font-semibold transition-colors">
+                            👤 Profile Info
+                        </button>
+                        <button onclick="showTab('addresses')" class="tab-button flex-1 py-4 px-6 text-center font-semibold transition-colors">
+                            📍 Addresses
+                        </button>
+                        <button onclick="showTab('preferences')" class="tab-button flex-1 py-4 px-6 text-center font-semibold transition-colors">
+                            ⚙️ Preferences
+                        </button>
+                    </div>
+
+                    <!-- Orders Tab -->
+                    <div id="orders-tab" class="tab-content p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-800">Your Orders</h3>
+                            <div class="flex gap-2">
+                                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option>All Orders</option>
+                                    <option>Delivered</option>
+                                    <option>Processing</option>
+                                    <option>Pending</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="orders-container">
+                            <!-- Orders will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Profile Info Tab -->
+                    <div id="profile-info-tab" class="tab-content p-8" style="display: none;">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Profile Information</h3>
+                        
+                        <form onsubmit="updateProfile(event)">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
+                                    <input type="text" id="profile-name-input" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-semibold mb-2">Email Address</label>
+                                    <input type="email" id="profile-email-input" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-semibold mb-2">Phone Number</label>
+                                    <input type="tel" id="profile-phone-input" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-semibold mb-2">Date of Birth</label>
+                                    <input type="date" id="profile-dob-input" class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <button type="submit" class="btn-primary px-8 py-3 text-white rounded-lg font-semibold">
+                                    💾 Update Profile
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Addresses Tab -->
+                    <div id="addresses-tab" class="tab-content p-8" style="display: none;">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-800">Saved Addresses</h3>
+                            <button onclick="openModal('add-address-modal')" class="btn-primary px-6 py-2 text-white rounded-lg font-semibold">
+                                ➕ Add New Address
+                            </button>
+                        </div>
+
+                        <div id="addresses-container" class="space-y-4">
+                            <!-- Addresses will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Preferences Tab -->
+                    <div id="preferences-tab" class="tab-content p-8" style="display: none;">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Account Preferences</h3>
+                        
+                        <div class="space-y-6">
+                            <div class="bg-gray-50 p-6 rounded-xl">
+                                <h4 class="text-lg font-semibold mb-4">Notifications</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-3">
+                                        <span>Email notifications for new deals</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-3">
+                                        <span>SMS notifications for order updates</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-3">
+                                        <span>Plant care tips and reminders</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-xl">
+                                <h4 class="text-lg font-semibold mb-4">Privacy Settings</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-3">
+                                        <span>Allow personalized recommendations</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-3">
+                                        <span>Share purchase history for better deals</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button class="btn-primary px-8 py-3 text-white rounded-lg font-semibold">
+                                💾 Save Preferences
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample order data
+        const sampleOrders = [
+            {
+                id: "ORD-2024-001",
+                date: "2024-01-15",
+                status: "delivered",
+                total: "$127.98",
+                shippingAddress: "123 Garden Street, Plant City, PC 12345",
+                trackingNumber: "JSP123456789",
+                items: [
+                    { name: "Monstera Deliciosa", emoji: "🌿", price: "$45.99", quantity: 1 },
+                    { name: "Snake Plant", emoji: "🐍", price: "$29.99", quantity: 2 },
+                    { name: "Peace Lily", emoji: "🕊️", price: "$34.99", quantity: 1 }
+                ]
+            },
+            {
+                id: "ORD-2024-002",
+                date: "2024-01-20",
+                status: "processing",
+                total: "$89.99",
+                shippingAddress: "123 Garden Street, Plant City, PC 12345",
+                trackingNumber: "JSP987654321",
+                items: [
+                    { name: "Fiddle Leaf Fig", emoji: "🎻", price: "$89.99", quantity: 1 }
+                ]
+            },
+            {
+                id: "ORD-2024-003",
+                date: "2024-01-25",
+                status: "pending",
+                total: "$67.97",
+                shippingAddress: "456 Business Ave, Work District, WD 67890",
+                trackingNumber: "Pending",
+                items: [
+                    { name: "Rubber Plant", emoji: "🌳", price: "$39.99", quantity: 1 },
+                    { name: "Aloe Vera", emoji: "🌵", price: "$19.99", quantity: 1 }
+                ]
+            }
+        ];
+
+        // Sample addresses
+        let userAddresses = [
+            {
+                id: 1,
+                type: "Home",
+                name: "John Doe",
+                street: "123 Garden Street",
+                city: "Plant City",
+                zip: "12345",
+                phone: "+1234567890",
+                isDefault: false
+            },
+            {
+                id: 2,
+                type: "Office",
+                name: "John Doe",
+                street: "456 Business Ave",
+                city: "Work District",
+                zip: "67890",
+                phone: "+1234567890",
+                isDefault: false
+            }
+        ];
+
+        // Check if user is logged in
+        function checkAuthStatus() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (user) {
+                showProfileSection(user);
+            } else {
+                showAuthSection();
+            }
+        }
+
+        // Show authentication section
+        function showAuthSection() {
+            document.getElementById('auth-section').style.display = 'flex';
+            document.getElementById('profile-section').style.display = 'none';
+        }
+
+        // Show profile section
+        function showProfileSection(user) {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('profile-section').style.display = 'block';
+            
+            // Update profile information
+            document.getElementById('profile-name').textContent = `Welcome, ${user.name}!`;
+            document.getElementById('profile-email').textContent = user.email;
+            document.getElementById('member-since').textContent = new Date(user.joinDate).getFullYear();
+            
+            // Update profile form inputs
+            document.getElementById('profile-name-input').value = user.name;
+            document.getElementById('profile-email-input').value = user.email;
+            document.getElementById('profile-phone-input').value = user.phone || '';
+            
+            // Update stats
+            updateProfileStats();
+            
+            // Load orders and addresses
+            displayOrders();
+            displayAddresses();
+        }
+
+        // Show login form
+        function showLoginForm() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+        }
+
+        // Show register form
+        function showRegisterForm() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+        }
+
+        // Handle login
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            // Check if user exists in localStorage
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                showToast(`Welcome back, ${user.name}!`);
+                showProfileSection(user);
+            } else {
+                showToast('Invalid email or password. Please try again.', true);
+            }
+        }
+
+        // Handle registration
+        function handleRegister(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const phone = document.getElementById('register-phone').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            if (password !== confirmPassword) {
+                showToast('Passwords do not match!', true);
+                return;
+            }
+            
+            // Check if user already exists
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            if (users.find(u => u.email === email)) {
+                showToast('User with this email already exists!', true);
+                return;
+            }
+            
+            // Create new user
+            const newUser = {
+                id: Date.now(),
+                name,
+                email,
+                phone,
+                password,
+                joinDate: new Date().toISOString(),
+                orders: sampleOrders,
+                addresses: userAddresses
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('currentUser', JSON.stringify(newUser));
+            
+            showToast(`Welcome to JSP PLANTS, ${name}!`);
+            showProfileSection(newUser);
+        }
+
+        // Update profile
+        function updateProfile(event) {
+            event.preventDefault();
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            
+            // Update user data
+            currentUser.name = document.getElementById('profile-name-input').value;
+            currentUser.email = document.getElementById('profile-email-input').value;
+            currentUser.phone = document.getElementById('profile-phone-input').value;
+            currentUser.dob = document.getElementById('profile-dob-input').value;
+            
+            // Update in users array
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex > -1) {
+                users[userIndex] = currentUser;
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Update display
+            document.getElementById('profile-name').textContent = `Welcome, ${currentUser.name}!`;
+            document.getElementById('profile-email').textContent = currentUser.email;
+            
+            showToast('Profile updated successfully!');
+        }
+
+        // Update profile stats
+        function updateProfileStats() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const orders = currentUser.orders || sampleOrders;
+            
+            const totalOrders = orders.length;
+            const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total.replace('$', '')), 0);
+            const plantsOwned = orders.reduce((sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+            
+            document.getElementById('total-orders').textContent = totalOrders;
+            document.getElementById('total-spent').textContent = `$${totalSpent.toFixed(2)}`;
+            document.getElementById('plants-owned').textContent = plantsOwned;
+        }
+
+        // Display orders
+        function displayOrders() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const orders = currentUser.orders || sampleOrders;
+            const container = document.getElementById('orders-container');
+            
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">📦</div>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">No orders yet</h3>
+                        <p class="text-gray-500 mb-6">Start shopping to see your orders here!</p>
+                        <a href="index.html" class="btn-primary px-6 py-3 text-white rounded-lg font-semibold">
+                            🌿 Start Shopping
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = orders.map(order => {
+                const statusClass = `status-${order.status}`;
+                const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+                
+                return `
+                    <div class="order-card bg-white rounded-xl p-6 shadow-lg">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-800">${order.id}</h4>
+                                <p class="text-gray-600">Ordered on ${new Date(order.date).toLocaleDateString()}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="status-badge ${statusClass} text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                    ${statusText}
+                                </span>
+                                <p class="text-xl font-bold text-gray-800 mt-2">${order.total}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-4">
+                            <h5 class="font-semibold text-gray-700 mb-3">Items (${order.items.length})</h5>
+                            <div class="space-y-2">
+                                ${order.items.map(item => `
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-2xl">${item.emoji}</span>
+                                            <div>
+                                                <span class="font-medium">${item.name}</span>
+                                                <span class="text-gray-500 text-sm ml-2">x${item.quantity}</span>
+                                            </div>
+                                        </div>
+                                        <span class="font-semibold">${item.price}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3 mt-6">
+                            <button onclick="viewOrderDetails('${order.id}')" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                                📋 View Details
+                            </button>
+                            ${order.status === 'delivered' ? `
+                                <button onclick="reorderItems('${order.id}')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                    🔄 Reorder
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // View order details
+        function viewOrderDetails(orderId) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const orders = currentUser.orders || sampleOrders;
+            const order = orders.find(o => o.id === orderId);
+            
+            if (!order) return;
+            
+            const content = document.getElementById('order-details-content');
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-2">Order Information</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Order ID:</span>
+                                <span class="font-medium ml-2">${order.id}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Date:</span>
+                                <span class="font-medium ml-2">${new Date(order.date).toLocaleDateString()}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Status:</span>
+                                <span class="font-medium ml-2 capitalize">${order.status}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Total:</span>
+                                <span class="font-medium ml-2">${order.total}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-2">Shipping Address</h4>
+                        <p class="text-gray-700">${order.shippingAddress}</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-2">Tracking Information</h4>
+                        <p class="text-gray-700">Tracking Number: <span class="font-medium">${order.trackingNumber}</span></p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Order Items</h4>
+                        <div class="space-y-3">
+                            ${order.items.map(item => `
+                                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-3xl">${item.emoji}</span>
+                                        <div>
+                                            <h5 class="font-medium">${item.name}</h5>
+                                            <p class="text-sm text-gray-600">Quantity: ${item.quantity}</p>
+                                        </div>
+                                    </div>
+                                    <span class="font-semibold text-green-600">${item.price}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            openModal('order-details-modal');
+        }
+
+        // Reorder items
+        function reorderItems(orderId) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const orders = currentUser.orders || sampleOrders;
+            const order = orders.find(o => o.id === orderId);
+            
+            if (!order) return;
+            
+            // Get current cart from localStorage
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            // Add order items to cart
+            order.items.forEach(item => {
+                const existingItem = cart.find(cartItem => cartItem.name === item.name);
+                if (existingItem) {
+                    existingItem.quantity += item.quantity;
+                } else {
+                    cart.push({
+                        id: Date.now() + Math.random(),
+                        name: item.name,
+                        price: item.price,
+                        emoji: item.emoji,
+                        quantity: item.quantity
+                    });
+                }
+            });
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            showToast(`${order.items.length} items added to cart! 🛒`);
+        }
+
+        // Display addresses
+        function displayAddresses() {
+            const container = document.getElementById('addresses-container');
+            
+            if (userAddresses.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">📍</div>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">No addresses saved</h3>
+                        <p class="text-gray-500 mb-6">Add your first address to get started!</p>
+                        <button onclick="openModal('add-address-modal')" class="btn-primary px-6 py-3 text-white rounded-lg font-semibold">
+                            ➕ Add Address
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = userAddresses.map(address => `
+                <div class="bg-white rounded-xl p-6 shadow-lg border ${address.isDefault ? 'border-green-500' : 'border-gray-200'}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <h4 class="text-lg font-semibold text-gray-800">${address.type}</h4>
+                                ${address.isDefault ? '<span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-bold">DEFAULT</span>' : ''}
+                            </div>
+                            <p class="font-medium text-gray-700">${address.name}</p>
+                            <p class="text-gray-600">${address.street}</p>
+                            <p class="text-gray-600">${address.city}, ${address.zip}</p>
+                            <p class="text-gray-600">${address.phone}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            ${!address.isDefault ? `
+                                <button onclick="setDefaultAddress(${address.id})" class="text-green-600 hover:text-green-800 p-2 text-sm">
+                                    Set Default
+                                </button>
+                            ` : ''}
+                            <button onclick="editAddress(${address.id})" class="text-blue-600 hover:text-blue-800 p-2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteAddress(${address.id})" class="text-red-600 hover:text-red-800 p-2">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Set default address
+        function setDefaultAddress(addressId) {
+            userAddresses.forEach(addr => addr.isDefault = false);
+            const address = userAddresses.find(addr => addr.id === addressId);
+            if (address) {
+                address.isDefault = true;
+                displayAddresses();
+                showToast('Default address updated!');
+            }
+        }
+
+        // Delete address
+        function deleteAddress(addressId) {
+            if (confirm('Are you sure you want to delete this address?')) {
+                userAddresses = userAddresses.filter(addr => addr.id !== addressId);
+                displayAddresses();
+                showToast('Address deleted successfully!');
+            }
+        }
+
+        // Edit address
+        function editAddress(addressId) {
+            showToast('Edit address feature coming soon!');
+        }
+
+        // Open modal
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // Save new address
+        function saveNewAddress(event) {
+            event.preventDefault();
+            
+            const newAddress = {
+                id: Date.now(),
+                type: document.getElementById('address-type').value,
+                name: document.getElementById('address-name').value,
+                phone: document.getElementById('address-phone').value,
+                street: document.getElementById('address-street').value,
+                city: document.getElementById('address-city').value,
+                zip: document.getElementById('address-zip').value,
+                isDefault: document.getElementById('address-default').checked
+            };
+            
+            // If this is set as default, remove default from others
+            if (newAddress.isDefault) {
+                userAddresses.forEach(addr => addr.isDefault = false);
+            }
+            
+            userAddresses.push(newAddress);
+            displayAddresses();
+            closeModal('add-address-modal');
+            
+            // Clear form
+            document.getElementById('address-type').value = '';
+            document.getElementById('address-name').value = '';
+            document.getElementById('address-phone').value = '';
+            document.getElementById('address-street').value = '';
+            document.getElementById('address-city').value = '';
+            document.getElementById('address-zip').value = '';
+            document.getElementById('address-default').checked = false;
+            
+            showToast('Address added successfully! 📍');
+        }
+
+        // Show tab
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.style.display = 'none');
+            
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('currentUser');
+                showToast('Logged out successfully!');
+                setTimeout(() => {
+                    showAuthSection();
+                    showLoginForm();
+                    // Clear form fields
+                    document.getElementById('login-email').value = '';
+                    document.getElementById('login-password').value = '';
+                }, 1000);
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${isError ? 'error' : ''} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+        });
+
+        // Initialize immediately
+        checkAuthStatus();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'971fbf09528aa2ad',t:'MTc1NTY3MDQyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
